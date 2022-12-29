@@ -1,0 +1,54 @@
+
+sections = [
+    ['ebook-fr', '.+FRENCH\.(HYBRID|SCAN|RETAIL).+eBook-.+'],
+    ['ebook', '.+(HYBRID|SCAN|RETAIL).+eBook-.+'],
+    ['tv-720p', '.+S\d{2,3}E\d+720p.+x264.+']
+]
+
+[sites]
+
+[sites.XX]  # XX should be the cbftp site name, case sensitive
+id = 'XX'
+groups_dir = '/groups/'  # At least the leading slash is required
+[sites.XX.dir_config]
+all = 'GROUP'  # Will be used in all cases
+match_group = true  # Will return group tag from the release name
+default = 'DEFAULT_GROUP'  #  If the group dir does not exist, will use this one instead
+[sites.XX.dir_config.group_map]
+# If 'all' or 'match_group' is not set, will use this dictionnary to map group tag from the release name to a specific directory
+GROUP = 'GROUP_ALT'
+
+[cbftp]
+
+[cbftp.cbftp_1]
+base_url = 'https://adress:port'
+password = 'password'
+verify = false
+proxy = 'my_proxy'
+
+# Note: proxies are only used when requesting the cbftp JSON API.
+# If set, the socks5 proxy from the cbftp config will be used when connecting to the API.
+[proxies]
+my_proxy = ''
+
+# The following are optional, and are used as defaults by the main command:
+[arguments]
+cbftp = 'cbftp_1'
+
+[logging]
+version = 1
+disable_existing_loggers = true
+
+[logging.formatters.consoleformat]
+format = '{asctime} [{levelname}] {name} - {message}'
+style = '{'
+
+[logging.handlers.console]
+class = 'logging.StreamHandler'
+formatter = 'consoleformat'
+level = 'DEBUG'
+
+[logging.loggers.pypre]
+level = 'DEBUG'
+propagate = true
+handlers = ['console']

@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.isort]
+src_paths = ["src"]
+line_length = 120
+use_parentheses = true
+honor_noqa = true
+remove_redundant_aliases = true
+
+[tool.black]
+line-length = 120
