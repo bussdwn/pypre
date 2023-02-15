@@ -74,4 +74,4 @@ load_dotenv(dotenv_path=find_dotenv(usecwd=True))
 try:
     config = Config.from_toml(Path(os.environ.get("PYPRE_CONFIG", "config/config.toml")))
 except ValidationError as e:
-    logging.exception("An error occured when validating config", e)
+    logging.exception("An error occurred when validating config", e)

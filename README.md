@@ -26,7 +26,7 @@ It is recommended to use a virtual environment to run this program. Be sure to h
 
 ```sh
 virtualenv env
-pip install -U pip setuptools wheels
+pip install -U pip setuptools wheel
 ```
 
 To install the package:
@@ -41,7 +41,7 @@ Make sure to have cbftp up and running, and check that the REST API is activated
 
 pypre is almost entirely configurable. You can find an example config at [`config_example.toml`](config/config_example.toml).
 
-By default, pypre will use the environment variable `PYPRE_CONFIG` to determine the location of your config file. If not set, it will use the path `config/config.toml` from the current working directory.
+By default, pypre will use the `PYPRE_CONFIG` environment variable to determine the location of your config file. If not set, it will use the path `config/config.toml`, relative to the current working directory.
 
 ### cbftp
 
@@ -74,41 +74,69 @@ sections = [
 ]
 ```
 
-Each regex value of the configuration will be tested one by one, until a match is found (matches are case insensitive). It is therefore recommended to define the most specific sections first.
+Each section is defined as a two-tuple, the first element being the section identifier (it's a generic one, not related to section names of any site). The second one is a regex value that is compiled with the [`re.IGNORECASE` flag](https://docs.python.org/fr/3/library/re.html#re.I).
 
-To determine the site section, this matching pattern will be used. By default, the key corresponding to the regex pattern will be used. If `sections_config` is defined in the [site configuration](#sites), the mapping from the site will be used (see below).
+Each regex value of the configuration will be tested one by one against the release name, until a match is found (matches are case insensitive). It is therefore recommended to define the most specific sections first, as showed in the example above.
+
+To determine the section name for each site, this matching pattern will be used. By default, the key corresponding to the regex pattern will be used. If `sections_config` is defined in the [site configuration](#sites), the mapping from the site will be used (see below).
 
 ### Sites
 
-The following example will be used:
+Here is a working example of a site configuration:
 
 ```toml
 [sites.XX]
 id = 'XX'
+pre_command = 'site pre {release} {section}'
 groups_dir = '/groups/'
 [sites.XX.dir_config]
-all = 'GROUP'
 match_group = true
-default = 'DEFAULT_GROUP'
-[sites.XX.dir_config.group_map]
-GROUP = 'GROUP_ALT'
 
 [sites.XX.sections_config]
 ebook-fr = 'ebook'
 ```
 
 - `id`: the cbftp site name, case sensitive. It is advised to use the same as the config key.
-- `groups_dir`: the site group directory.
-- `dir_config`: defines which group directory should be used on site depending on the release name.
-  - `all`: this group directory will be used in any case, no matter the release name group tag.
-  - `match_group`: will use the release name tag as the group directory.
-  - `default`: if the returned group directory does not exist on the site, will use this one instead.
-  - `group_map`: If 'all' or 'match_group' is not set, will use this dictionnary to map group tag from the release name to a specific directory
-- `sections_config`: optional section configuration. Once the section have been determined using the `[sections]` mapping, the section will be mapped to a site specific section.
+- `pre_command`: The pre command template to be used. Must contain the two template strings `{release}` and `{section}`.
+- `groups_dir`: the site group directory. Must be the absolute path from `/`.
+
+#### `dir_config`
+
+Releases will be uploaded into this directory relative to `groups_dir` (e.g. if the determined group directory is `GROUP1`, and `groups_dir` is set to `/groups/`, the release will be uploaded in `/groups/GROUP1/`).
+
+Different settings are available:
+
+- `all` (string): this group directory will be used in all cases, no matter the release name group tag.
+
+```toml
+[sites.XX]
+id = 'XX'
+groups_dir = '/groups/'
+[sites.XX.dir_config]
+all = 'GROUP1'  # All releases will be uploaded to /groups/GROUP1/
+```
+
+- `match_group` (boolean): will extract the group tag from the release name as the group directory.
+- `group_map` (dict): if 'all' or 'match_group' is not set, will use this dictionary to map group tag from the release name to a specific directory.
+
+```toml
+[sites.XX]
+id = 'XX'
+groups_dir = '/groups/'
+[sites.XX.dir_config.group_map]
+CoolTVGRP_SD = 'CoolTVGRP'  # Releases having the CoolTVGRP_SD tag will be uploaded to /groups/CoolTVGRP/
+CoolTVGRP_HD = 'CoolTVGRP'  # Releases having the CoolTVGRP_HD tag will be uploaded to /groups/CoolTVGRP/
+```
+
+- `default` (string): if the group directory from the above parameters does not exist on the site, this one will be used instead.
+
+#### `sections_config`
+
+Optional section configuration. Once the section identifier has been determined using the `[sections]` mapping, the section will be mapped to a site specific section.
 
 Here is a use case of the last parameter:
 
-The section of the release `release.FRENCH.eBook-GRP` returned by the the `[sections]` regex pattern matching is `ebook-fr`.
+The section of the release `release.FRENCH.eBook-GRP` returned by the `[sections]` regex pattern matching is `ebook-fr`.
 
 Let's say we have two sites, `S1` and `S2`:
 - The French ebook section of `S1` is `ebook-fr`. Therefore we don't need any more configuration and `sections_config` can be omitted.
@@ -152,13 +180,13 @@ pypre provides three main commands, `upload`, `fxp` and `pre`.
 You can find help for each command using:
 
 ```sh
-pypre cmd -h  # Or pp cmd -h
+pypre cmd --help  # Or pp cmd --help
 ```
 
 For generic parameters, you can check the main command help:
 
 ```sh
-pypre -h
+pypre --help
 ```
 
 To tell which cbftp server to use, specify the server name via the `--cbftp` option:
@@ -167,14 +195,34 @@ To tell which cbftp server to use, specify the server name via the `--cbftp` opt
 pypre --cbftp cbftp_1 cmd
 ```
 
-You can also set a default value with the `[arguments]` configuration. See the example config for more details.
+You can also set a default value with the `[arguments]` configuration. See the [example config](config/config_example.toml) for more details.
 
 You can provide the releases to be processed in several ways:
-- Using the `--releases` argument
+- Using the `--releases` argument (short: `-r`)
 - From a file using the `--file` argument
-- Using a glob expression with the `--glob` argument
+- Using a glob expression with the `--glob` argument (short: `-g`)
 
 To abort transfers, you can use your keyboard interrupt key.
+
+### Example commands
+
+Upload all releases matching the glob pattern `*x264*MYGRP` to site `S1`, wait for uploads to complete before exiting, and check completeness of releases once uploaded:
+
+```sh
+pypre upload -g "*x264*MYGRP" -s S1 -w -c
+```
+
+FXP the previously uploaded releases from `S1` to `S2` and `S3`:
+
+```sh
+pypre fxp -g "*x264*MYGRP" -f S1 -t S2 -t S3 -w -c
+```
+
+Pre the previously uploaded and transferred releases on `S1`, `S2` and `S3`, with a cooldown of 10 seconds between each pre:
+
+```sh
+pypre pre -g "*x264*MYGRP" -s S1 -s S2 -s S3 -c 10
+```
 
 ## Todo
 

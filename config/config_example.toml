@@ -15,7 +15,7 @@ all = 'GROUP'  # Will be used in all cases
 match_group = true  # Will return group tag from the release name
 default = 'DEFAULT_GROUP'  #  If the group dir does not exist, will use this one instead
 [sites.XX.dir_config.group_map]
-# If 'all' or 'match_group' is not set, will use this dictionnary to map group tag from the release name to a specific directory
+# If 'all' or 'match_group' is not set, will use this dictionary to map group tag from the release name to a specific directory
 GROUP = 'GROUP_ALT'
 
 [cbftp]

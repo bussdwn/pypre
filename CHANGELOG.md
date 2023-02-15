@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.4 - 2023-02-15
+
+- Clarify available settings in README, and added some example commands
+
+## 1.2.3 - 2023-01-14
+
+- Fix a few typos
+
 ## 1.2.2 - 2022-12-29
 
 - Fix a few typos

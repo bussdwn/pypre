@@ -18,7 +18,7 @@ from pypre.utils.click import GlobPaths
     "--releases",
     type=click.Path(exists=False, file_okay=False, path_type=Path),
     multiple=True,
-    help="Releases to be transfered, relative to the working directory.",
+    help="Releases to be transferred, relative to the working directory.",
 )
 @click.option(
     "-g",

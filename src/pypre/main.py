@@ -12,7 +12,7 @@ logging.config.dictConfig(config.logging)
 
 @click.group(context_settings={"default_map": config.arguments})
 @click.version_option(version=__version__, package_name="pypre")
-@click.option("--debug", is_flag=True, default=False, help="Set logger level to DEGUG.")
+@click.option("--debug", is_flag=True, default=False, help="Set logger level to DEBUG.")
 @click.option(
     "-y",
     "--yes",
