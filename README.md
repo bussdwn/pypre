@@ -13,9 +13,13 @@ pypre is fully typed and mypy compliant.
     - [cbftp](#cbftp)
     - [Sections](#sections)
     - [Sites](#sites)
+      - [`dir_config`](#dir_config)
+      - [`sections_config`](#sections_config)
     - [Proxies](#proxies)
     - [Logging](#logging)
   - [Usage](#usage)
+    - [Example commands](#example-commands)
+  - [Configuration encryption](#configuration-encryption)
   - [Todo](#todo)
 
 ## Installation
@@ -223,6 +227,18 @@ Pre the previously uploaded and transferred releases on `S1`, `S2` and `S3`, wit
 ```sh
 pypre pre -g "*x264*MYGRP" -s S1 -s S2 -s S3 -c 10
 ```
+
+## Configuration encryption
+
+It is possible to encrypt your configuration file with a passphrase. The [encrypt_config.py](scripts/encrypt_config.py) can be used to do so:
+
+```sh
+python scripts/encrypt_config.py /path/to/config.toml --outpath /path/to/encrypted
+```
+
+If `--outpath` isn't provided, the original config file will be overridden. The passphrase will then be asked each time `pypre` is used, unless the `PYPRE_CONFIG_KEY` environment variable is set.
+
+`cryptography` is required to use this feature, and can be installed using the following command: `pip install pypre[crypto]`.
 
 ## Todo
 

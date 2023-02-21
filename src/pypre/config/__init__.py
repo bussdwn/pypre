@@ -1,20 +1,51 @@
 import logging
 import os
 import re
+from getpass import getpass
 from pathlib import Path
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional
 
 try:
-    import tomllib  # type: ignore
+    import tomllib
 except ModuleNotFoundError:
-    import tomli as tomllib  # type: ignore
+    import tomli as tomllib  # type: ignore[no-redef]
+
+try:
+    import cryptography
+
+    has_crypto = True
+except ModuleNotFoundError:
+    has_crypto = False
 
 from dotenv import find_dotenv, load_dotenv
 from pydantic import AnyHttpUrl, BaseModel, BaseSettings, Extra, ValidationError, root_validator, validator
+from pydantic.env_settings import SettingsSourceCallable
 
 from pypre.objects.site import Site
+from pypre.utils.types import SourcesTuple
 
-C = TypeVar("C", bound="Config")
+
+def toml_encrypted_config(settings: BaseSettings) -> dict[str, Any]:
+    with open(Path(os.environ.get("PYPRE_CONFIG", "config.toml")), "rb") as cfg_file:
+        try:
+            return tomllib.load(cfg_file)
+        except (UnicodeDecodeError, tomllib.TOMLDecodeError) as e:  # Config file is probably encrypted
+            if not has_crypto:
+                logging.exception(
+                    (
+                        "Config file seems to be encrypted but 'cryptography' is missing."
+                        "Try installing pypre with the following dependency: 'pypre[crypto]'."
+                    ),
+                    exc_info=e,
+                )
+                raise SystemExit()
+
+            from pypre.crypto import decrypt_config
+
+            cfg_file.seek(0)
+            key_str = os.environ.get("PYPRE_CONFIG_KEY") or getpass("Enter AES passphrase: ")
+            decrypted_config = decrypt_config(key_str, cfg_file.read())
+            return tomllib.loads(decrypted_config.decode())
 
 
 class Cbftp(BaseModel):
@@ -59,19 +90,20 @@ class Config(BaseSettings):
     class Config:
         extra = Extra.ignore
 
-    @classmethod
-    def from_toml(cls: type[C], path: Path) -> C:
-        if not path.exists():
-            raise FileNotFoundError(f"Config file path ({path}) was not found")
-        if not path.is_file():
-            raise FileNotFoundError(f"Config file path ({path}) is not to a file.")
-        with open(path, "rb") as config_file:
-            return cls(**tomllib.load(config_file))
+        @classmethod
+        def customise_sources(
+            cls,
+            init_settings: SettingsSourceCallable,
+            env_settings: SettingsSourceCallable,
+            file_secret_settings: SettingsSourceCallable,
+        ) -> SourcesTuple:
+            return (init_settings, env_settings, toml_encrypted_config, file_secret_settings)
 
 
 load_dotenv(dotenv_path=find_dotenv(usecwd=True))
 
 try:
-    config = Config.from_toml(Path(os.environ.get("PYPRE_CONFIG", "config/config.toml")))
+    config = Config()
 except ValidationError as e:
-    logging.exception("An error occurred when validating config", e)
+    logging.exception("An error has occured when validating config", exc_info=e)
+    raise SystemExit()

@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+import sys
 from pathlib import PurePosixPath
-from typing import Any, TypeVar
+from typing import Any
 from urllib.parse import urlencode, urljoin
+
+if sys.version_info >= (3, 11, 0, "alpha", 6):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 import requests
 from requests import ConnectionError, HTTPError
@@ -10,7 +16,6 @@ from requests import ConnectionError, HTTPError
 from pypre.cbftp.exceptions import CommandFailure
 from pypre.config import Cbftp, config
 
-C = TypeVar("C", bound="CBFTP")
 
 
 class CBFTP:
@@ -20,7 +25,7 @@ class CBFTP:
         password: str,
         verify: bool = False,
         proxy: str | None = None,
-    ):
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
         if proxy is not None and config.proxies.get(proxy):
@@ -29,7 +34,7 @@ class CBFTP:
         self.session.verify = verify
 
     @classmethod
-    def from_config(cls: type[C], cbftp_cfg: Cbftp) -> C:
+    def from_config(cls, cbftp_cfg: Cbftp) -> Self:
         return cls(**cbftp_cfg.dict())
 
     def available(self) -> bool:

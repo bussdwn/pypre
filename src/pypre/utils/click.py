@@ -29,7 +29,7 @@ class GlobPaths(ParamType):
         readable_only: bool = True,
         resolve: bool = False,
         at_least_one: bool = True,
-    ):
+    ) -> None:
         self.files_okay = files_okay
         self.dirs_okay = dirs_okay
         self.writable_only = writable_only

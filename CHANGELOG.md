@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0 - 2023-02-21
+
+- Configuration file can be encrypted using AES.
+- Added `typing-extensions` as a dependency, and fixed some type hints.
+
 ## 1.2.4 - 2023-02-15
 
 - Clarify available settings in README, and added some example commands
