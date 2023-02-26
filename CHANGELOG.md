@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1 - 2023-02-26
+
+- Ask for AES passphrase when decryption failed.
+
 ## 1.3.0 - 2023-02-21
 
 - Configuration file can be encrypted using AES.

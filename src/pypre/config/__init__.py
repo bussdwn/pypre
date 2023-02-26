@@ -11,7 +11,7 @@ except ModuleNotFoundError:
     import tomli as tomllib  # type: ignore[no-redef]
 
 try:
-    import cryptography
+    from cryptography.fernet import InvalidToken
 
     has_crypto = True
 except ModuleNotFoundError:
@@ -43,8 +43,19 @@ def toml_encrypted_config(settings: BaseSettings) -> dict[str, Any]:
             from pypre.crypto import decrypt_config
 
             cfg_file.seek(0)
+            encrypted_data = cfg_file.read()
             key_str = os.environ.get("PYPRE_CONFIG_KEY") or getpass("Enter AES passphrase: ")
-            decrypted_config = decrypt_config(key_str, cfg_file.read())
+            try:
+                decrypted_config = decrypt_config(key_str, encrypted_data)
+            except InvalidToken:
+                while True:
+                    key_str = getpass("Invalid AES passphrase, try again: ")
+                    try:
+                        decrypted_config = decrypt_config(key_str, encrypted_data)
+                        break
+                    except InvalidToken:
+                        pass
+
             return tomllib.loads(decrypted_config.decode())
 
 
