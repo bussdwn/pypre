@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2 - 2023-03-04
+
+- Fix syntax of `setup.cfg` file.
+
 ## 1.3.1 - 2023-02-26
 
 - Ask for AES passphrase when decryption failed.
