@@ -2,14 +2,13 @@ import io
 import itertools
 import logging
 from pathlib import Path
-from typing import cast
+from typing import Optional, cast
 
 import click
 from natsort import natsorted
 
 from pypre.config import config
-from pypre.manager import get_manager
-from pypre.utils.click import GlobPaths
+from pypre.utils.click import CtxObj, GlobPaths
 
 
 @click.command(name="upload", short_help="Upload releases to site(s).")
@@ -50,13 +49,15 @@ def upload(
     ctx: click.Context,
     releases: tuple[Path, ...],
     glob: tuple[list[Path], ...],
-    file: io.TextIOWrapper | None,
+    file: Optional[io.TextIOWrapper],
     site: tuple[str, ...],
     wait: bool,
     check: bool,
-    fxp: tuple[str, ...] | None,
+    fxp: Optional[tuple[str, ...]],
 ) -> None:
     log = logging.getLogger("pypre.upload")
+
+    ctx_obj: CtxObj = ctx.obj
 
     sites = set(site)
     if fxp is not None:
@@ -65,7 +66,7 @@ def upload(
             log.critical("Can't FXP to the site(s) the releases were uploaded to.")
             raise SystemExit()
 
-    manager = get_manager(ctx.obj["cbftp"])
+    manager = ctx_obj.manager
     available_sites = set(manager.get_sites())
     if fxp_set is not None and not sites.union(fxp_set).issubset(available_sites):
         log.critical(
@@ -74,22 +75,21 @@ def upload(
         )
         raise SystemExit()
 
-    releases_list = list(releases)
-    releases_list += list(itertools.chain(*glob))
+    releases_set = set(itertools.chain(releases, *glob))
 
     if file is not None:
         file_list = file.read().splitlines()
         for rel in file_list:
             p = Path(rel)
             if p.exists() and p.is_dir():
-                releases_list.append(p.resolve())
+                releases_set.add(p.resolve())
             else:
                 log.warning("%s does not exist or is not a directory, and will be skipped.", rel)
 
-    releases_list = list(filter(None, set(releases_list)))
+    releases_list = list(filter(None, releases_set))
 
-    reverse = ctx.obj["sort"].upper() == "DSC"
-    if ctx.obj["psort"]:
+    reverse = ctx_obj.sort_order == "DSC"
+    if ctx_obj.psort:
         releases_list.sort(reverse=reverse)
     else:
         releases_list = natsorted(releases_list, reverse=reverse)

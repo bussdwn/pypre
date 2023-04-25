@@ -3,27 +3,33 @@ import functools
 import logging
 from pathlib import PurePosixPath
 from time import sleep
-from typing import Any
+from typing import Any, Optional
 
 import click
 from tqdm import tqdm
 
-from pypre.cbftp import get_cbftp_client
+from pypre.cbftp import CBFTP
 from pypre.objects.site import Site
 from pypre.utils.types import PBarsType
 
 
 class CBFTPManager:
-    def __init__(self, cbftp: str) -> None:
-        self.cbftp = get_cbftp_client(cbftp)
+    """Manager taking care of high level operations regarding the CBFTP client.
+
+    Args:
+        cbftp: The CBFTP client instance to use.
+    """
+
+    def __init__(self, cbftp: CBFTP) -> None:
+        self.cbftp = cbftp
         self.log = logging.getLogger("pypre.manager")
-        if not self.cbftp.available():
+        if not self.cbftp.online:
             self.log.critical("The CBFTP server %r is not reachable.", cbftp)
             raise SystemExit()
 
     def _get_dst_path(self, site: Site, release_name: str) -> PurePosixPath:
         group_dir, default_group_dir = site.get_group_dir(release_name)
-        site_group_dirs = self.get_site_group_dirs(site.id, site.groups_dir)
+        site_group_dirs = self.get_site_group_dirs(site)
 
         if group_dir is not None and group_dir.lower().endswith("_int"):
             group_dir = group_dir[:-4]
@@ -40,14 +46,42 @@ class CBFTPManager:
         return PurePosixPath(site.groups_dir, group_dir)
 
     def get_sites(self, **kwargs: Any) -> list[str]:
+        """Get available sites on the CBFTP instance.
+
+        Args:
+            **kwargs: kwargs to be passed to the CBFTP client.
+
+        Returns:
+            The list of the site string IDs.
+        """
         return self.cbftp.get_sites(**kwargs)
 
     @functools.cache
-    def get_site_group_dirs(self, site_id: str, groups_dir: str, **kwargs: Any) -> list[str]:
-        list_path = self.cbftp.list_path(site=site_id, path=groups_dir, type="DIR", **kwargs)
+    def get_site_group_dirs(self, site: Site, **kwargs: Any) -> list[str]:
+        """Get the available group directories for the provided site.
+
+        Args:
+            site: the site to be used.
+            **kwargs: kwargs to be passed to the CBFTP client.
+
+        Returns:
+            The list of the available group directories.
+        """
+        list_path = self.cbftp.list_path(site=site.id, path=site.groups_dir, type="DIR", **kwargs)
         return [path["name"] for path in list_path]
 
-    def upload(self, site: Site, release_name: str, src_path: str | None = None, **kwargs: Any) -> dict[str, Any]:
+    def upload(self, site: Site, release_name: str, src_path: Optional[str] = None, **kwargs: Any) -> dict[str, Any]:
+        """Upload the release from the specified source path to site.
+
+        Args:
+            site: The site to upload to.
+            release_name: The release name to be uploaded.
+            src_path: The source path where the release is located.
+            **kwargs: kwargs to be passed to the CBFTP client.
+
+        Returns:
+            The result from the CBFTP client.
+        """
         dst_path = self._get_dst_path(site, release_name)
         json = {"dst_site": site.id, "dst_path": str(dst_path), "name": release_name}
         if src_path is not None:
@@ -56,6 +90,17 @@ class CBFTPManager:
         return transferjobs
 
     def fxp(self, src_site: Site, dst_site: Site, release_name: str, **kwargs: Any) -> dict[str, Any]:
+        """FXP the release between the two provided sites.
+
+        Args:
+            src_site: The site to download from.
+            dst_site: The site to upload to.
+            release_name: The release name to be transfered.
+            **kwargs: kwargs to be passed to the CBFTP client.
+
+        Returns:
+            The result from the CBFTP client.
+        """
         src_path = self._get_dst_path(src_site, release_name)
         dst_path = self._get_dst_path(dst_site, release_name)
 
@@ -70,6 +115,12 @@ class CBFTPManager:
         return transferjobs
 
     def pre(self, release_name: str, sites: list[Site]) -> None:
+        """Pre the provided release name to the specified sites, using a thread pool.
+
+        Args:
+            release_name: The release name to pre.
+            sites: The list of sites to pre to.
+        """
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(sites)) as executor:
             futures = {}
             for site in sites:
@@ -89,6 +140,11 @@ class CBFTPManager:
         return any("COMPLETE" in path["name"].upper() for path in list_path)
 
     def show_transfer_progress(self, upload_jobs: list[int]) -> None:
+        """Show the transfer progress of the provided upload jobs IDs.
+
+        Args:
+            upload_jobs: The upload jobs IDs to display.
+        """
         sleep(1)  # Necessary to be sure that cbftp returns the correct number of estimated bytes
         try:
             pbars: list[PBarsType] = [
@@ -118,14 +174,3 @@ class CBFTPManager:
                 if abort:
                     self.cbftp.abort_transferjob(id=pbar["job_id"])
             raise
-
-
-_managers: dict[str, CBFTPManager] = {}
-
-
-def get_manager(name: str) -> CBFTPManager:
-    manager = _managers.get(name)
-    if manager is None:
-        manager = CBFTPManager(name)
-        _managers[name] = manager
-    return manager

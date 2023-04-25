@@ -2,14 +2,14 @@ import io
 import itertools
 import logging
 from pathlib import Path
-from typing import Iterable, cast
+from typing import Iterable, Optional, cast
 
 import click
 from natsort import natsorted
 
 from pypre.config import config
-from pypre.manager import CBFTPManager, get_manager
-from pypre.utils.click import GlobPaths
+from pypre.manager import CBFTPManager
+from pypre.utils.click import CtxObj, GlobPaths
 
 
 @click.command(name="fxp", short_help="FXP releases to site(s).")
@@ -56,7 +56,7 @@ def fxp(
     ctx: click.Context,
     releases: tuple[Path, ...],
     glob: tuple[list[Path], ...],
-    file: io.TextIOWrapper | None,
+    file: Optional[io.TextIOWrapper],
     from_: str,
     to: tuple[str, ...],
     wait: bool,
@@ -64,32 +64,31 @@ def fxp(
 ) -> None:
     log = logging.getLogger("pypre.fxp")
 
+    ctx_obj: CtxObj = ctx.obj
+
     if from_ in to:
         log.critical("Can't FXP to the site the releases were uploaded to.")
         raise SystemExit()
 
     to_set = set(to)
 
-    releases_list = list(releases)
-    releases_list += list(itertools.chain(*glob))
-    release_names = [release.name for release in filter(None, releases_list)]
+    releases_set = set(itertools.chain(releases, *glob))
 
     if file is not None:
         file_list = file.read().splitlines()
         for rel in file_list:
             if rel.strip():
-                release_names.append(Path(rel).name)
+                releases_set.add(Path(rel))
 
-    release_names = list(set(release_names))
+    release_names = [release.name for release in filter(None, releases_set)]
 
-    reverse = ctx.obj["sort"].upper() == "DSC"
-    if ctx.obj["psort"]:
+    reverse = ctx_obj.sort_order == "DSC"
+    if ctx_obj.psort:
         release_names.sort(reverse=reverse)
     else:
         release_names = natsorted(release_names, reverse=reverse)
 
-    manager = get_manager(ctx.obj["cbftp"])
-    fxp_releases(manager, release_names, from_, to_set, wait, check)
+    fxp_releases(ctx_obj.manager, release_names, from_, to_set, wait, check)
 
 
 def fxp_releases(

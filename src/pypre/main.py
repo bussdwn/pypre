@@ -4,8 +4,11 @@ from typing import cast
 import click
 
 from pypre import __version__
+from pypre.cbftp import CBFTP
 from pypre.commands import fxp, pre, upload
 from pypre.config import config
+from pypre.manager import CBFTPManager
+from pypre.utils.click import CtxObj
 
 logging.config.dictConfig(config.logging)
 
@@ -38,6 +41,7 @@ logging.config.dictConfig(config.logging)
     "--cbftp",
     type=click.Choice(cast(list[str], config.cbftp.keys())),
     help="Cbftp server to use.",
+    required=True,
 )
 @click.pass_context
 def main(
@@ -46,10 +50,24 @@ def main(
     yes: bool,
     sort: str,
     psort: bool,
-    cbftp: str | None,
+    cbftp: str,
 ) -> None:
+    cbftp_cfg = config.cbftp[cbftp]
 
-    ctx.obj = {"debug": debug, "yes": yes, "sort": sort, "psort": psort, "cbftp": cbftp}
+    manager = CBFTPManager(
+        cbftp=CBFTP(
+            proxy=config.proxies.get(cbftp_cfg.proxy) if cbftp_cfg.proxy is not None else None,
+            **cbftp_cfg.dict(exclude={"proxy"}),
+        ),
+    )
+
+    ctx.obj = CtxObj(
+        debug=debug,
+        yes=yes,
+        sort_order=sort.upper(),  # type: ignore[arg-type]
+        psort=psort,
+        manager=manager,
+    )
 
 
 main.add_command(upload)

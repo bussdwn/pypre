@@ -114,7 +114,7 @@ class Config(BaseSettings):
 load_dotenv(dotenv_path=find_dotenv(usecwd=True))
 
 try:
-    config = Config()
+    config = Config()  # type: ignore[call-arg]
 except ValidationError as e:
     logging.exception("An error has occured when validating config", exc_info=e)
     raise SystemExit()

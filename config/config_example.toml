@@ -9,6 +9,7 @@ sections = [
 
 [sites.XX]  # XX should be the cbftp site name, case sensitive
 id = 'XX'
+pre_command = 'site pre {release} {section}'
 groups_dir = '/groups/'  # At least the leading slash is required
 [sites.XX.dir_config]
 all = 'GROUP'  # Will be used in all cases
@@ -40,6 +41,7 @@ version = 1
 disable_existing_loggers = true
 
 [logging.formatters.consoleformat]
+'()' = 'pypre.utils.logging.ColourizedFormatter'
 format = '{asctime} [{levelname}] {name} - {message}'
 style = '{'
 

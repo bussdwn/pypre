@@ -1,9 +1,21 @@
+from dataclasses import dataclass
 from glob import iglob
 from os import R_OK, W_OK, access
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Literal, Optional
 
 from click import Context, Parameter, ParamType
+
+from pypre.manager import CBFTPManager
+
+
+@dataclass
+class CtxObj:
+    debug: bool
+    yes: bool
+    sort_order: Literal["ASC", "DSC"]
+    psort: bool
+    manager: CBFTPManager
 
 
 class GlobPaths(ParamType):
@@ -50,7 +62,7 @@ class GlobPaths(ParamType):
             return file_path, False, "exists, is a directory"
         return file_path, True, "valid"
 
-    def convert(self, value: str, param: Parameter | None, ctx: Context | None) -> Iterable[Path]:
+    def convert(self, value: str, param: Optional[Parameter], ctx: Optional[Context]) -> Iterable[Path]:
         validation_results = [self._validated_path(Path(p)) for p in iglob(value)]
         if self.at_least_one and not any(valid for _, valid, __ in validation_results):
             summary = "\n".join(f"\t{path}: {why}" for path, _, why in validation_results)

@@ -46,12 +46,21 @@ def encrypt_config_file(key_str: str, config_path: Path, outpath: Optional[Path]
     return outpath or config_path
 
 
+def get_password() -> str:
+    password = getpass("Enter AES passphrase: ")
+    password_confirm = getpass("Confirm AES passphrase: ")
+    if password != password_confirm:
+        print("Passphrase does not match")
+        return get_password()
+    return password
+
+
 if __name__ == "__main__":
     args = handle_args()
     if not args.config_path.exists() or not args.config_path.is_file():
         raise ValueError(f"{args.config_path} does not exist or is not a file.")
 
     print(f"Reading config from {args.config_path}...")
-    outpath = encrypt_config_file(getpass("Enter AES passphrase: "), args.config_path, args.outpath)
+    outpath = encrypt_config_file(get_password(), args.config_path, args.outpath)
     print(f"Encrypted config written to {outpath}")
     raise SystemExit(0)

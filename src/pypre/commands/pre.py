@@ -3,14 +3,14 @@ import itertools
 import logging
 from pathlib import Path
 from time import sleep
-from typing import cast
+from typing import Optional, cast
 
 import click
 from natsort import natsorted
 
 from pypre.config import config
-from pypre.manager import CBFTPManager, get_manager
-from pypre.utils.click import GlobPaths
+from pypre.manager import CBFTPManager
+from pypre.utils.click import CtxObj, GlobPaths
 
 
 @click.command(name="pre", short_help="Pre releases to site(s).")
@@ -50,32 +50,31 @@ def pre(
     ctx: click.Context,
     releases: tuple[Path, ...],
     glob: tuple[list[Path], ...],
-    file: io.TextIOWrapper | None,
+    file: Optional[io.TextIOWrapper],
     site: tuple[str, ...],
     cooldown: float,
 ) -> None:
     sites = set(site)
 
-    releases_list = list(releases)
-    releases_list += list(itertools.chain(*glob))
-    release_names = [release.name for release in filter(None, releases_list)]
+    ctx_obj: CtxObj = ctx.obj
+
+    releases_set = set(itertools.chain(releases, *glob))
 
     if file is not None:
         file_list = file.read().splitlines()
         for rel in file_list:
             if rel.strip():
-                release_names.append(Path(rel).name)
+                releases_set.add(Path(rel))
 
-    release_names = list(set(release_names))
+    release_names = [release.name for release in filter(None, releases_set)]
 
-    reverse = ctx.obj["sort"].upper() == "DSC"
-    if ctx.obj["psort"]:
+    reverse = ctx_obj.sort_order == "DSC"
+    if ctx_obj.psort:
         release_names.sort(reverse=reverse)
     else:
         release_names = natsorted(release_names, reverse=reverse)
 
-    manager = get_manager(ctx.obj["cbftp"])
-    pre_releases(manager, release_names, sites, cooldown)
+    pre_releases(ctx_obj.manager, release_names, sites, cooldown)
 
 
 def pre_releases(manager: CBFTPManager, releases: list[str], sites_keys: set[str], cooldown: float) -> None:

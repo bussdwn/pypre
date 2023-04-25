@@ -13,8 +13,6 @@ pypre is fully typed and mypy compliant.
     - [cbftp](#cbftp)
     - [Sections](#sections)
     - [Sites](#sites)
-      - [`dir_config`](#dir_config)
-      - [`sections_config`](#sections_config)
     - [Proxies](#proxies)
     - [Logging](#logging)
   - [Usage](#usage)
@@ -45,7 +43,7 @@ Make sure to have cbftp up and running, and check that the REST API is activated
 
 pypre is almost entirely configurable. You can find an example config at [`config_example.toml`](config/config_example.toml).
 
-By default, pypre will use the `PYPRE_CONFIG` environment variable to determine the location of your config file. If not set, it will use the path `config/config.toml`, relative to the current working directory.
+By default, pypre will use the `PYPRE_CONFIG` environment variable to determine the location of your config file. If not set, it will use the file `config.toml`, relative to the current working directory.
 
 ### cbftp
 

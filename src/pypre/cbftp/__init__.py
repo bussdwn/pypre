@@ -1,3 +1,3 @@
-__all__ = ("CBFTP", "get_cbftp_client")
+__all__ = ("CBFTP",)
 
-from pypre.cbftp.cbftp import CBFTP, get_cbftp_client
+from pypre.cbftp.cbftp import CBFTP
