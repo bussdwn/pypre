@@ -1,9 +1,9 @@
 import logging.config
+from importlib.metadata import version
 from typing import cast
 
 import click
 
-from pypre import __version__
 from pypre.cbftp import CBFTP
 from pypre.commands import fxp, pre, upload
 from pypre.config import config
@@ -14,7 +14,7 @@ logging.config.dictConfig(config.logging)
 
 
 @click.group(context_settings={"default_map": config.arguments})
-@click.version_option(version=__version__, package_name="pypre")
+@click.version_option(version=version("pypre"), package_name="pypre")
 @click.option("--debug", is_flag=True, default=False, help="Set logger level to DEBUG.")
 @click.option(
     "-y",
@@ -56,8 +56,9 @@ def main(
 
     manager = CBFTPManager(
         cbftp=CBFTP(
+            name=cbftp,
             proxy=config.proxies.get(cbftp_cfg.proxy) if cbftp_cfg.proxy is not None else None,
-            **cbftp_cfg.dict(exclude={"proxy"}),
+            **cbftp_cfg.model_dump(exclude={"proxy"}),
         ),
     )
 

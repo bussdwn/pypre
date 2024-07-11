@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0 - 2024-07-11
+
+- Add a `name` attribute to `CBFTP` for logging purposes.
+- Fix error when trying to decode the request response to abort a transfer job.
+- Update project metadata using `pyproject.toml`.
+- Update dead link in README, remove information regarding `setuptools`.
+- Migrate to `pydantic` v2.
+- Remove support for environment variables.
+- Migrate to Ruff.
+- Use 3.10+ type annotations.
+
 ## 1.4.0 - 2023-04-25
 
 - Refactor management of `CBFTP` and `CBFTPMananger`.

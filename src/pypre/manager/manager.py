@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import concurrent.futures
 import functools
 import logging
 from pathlib import PurePosixPath
 from time import sleep
-from typing import Any, Optional
+from typing import Any
 
 import click
 from tqdm import tqdm
@@ -24,7 +26,7 @@ class CBFTPManager:
         self.cbftp = cbftp
         self.log = logging.getLogger("pypre.manager")
         if not self.cbftp.online:
-            self.log.critical("The CBFTP server %r is not reachable.", cbftp)
+            self.log.critical("The CBFTP server %r is not reachable.", cbftp.name)
             raise SystemExit()
 
     def _get_dst_path(self, site: Site, release_name: str) -> PurePosixPath:
@@ -38,7 +40,7 @@ class CBFTPManager:
 
         if group_dir not in site_group_dirs:
             if default_group_dir is None:
-                raise ValueError(f"No group directory matching and no default one provided.")
+                raise ValueError("No group directory matching and no default one provided.")
             if default_group_dir not in site_group_dirs:
                 raise ValueError(f"{default_group_dir} does not exist.")
             group_dir = default_group_dir
@@ -70,7 +72,7 @@ class CBFTPManager:
         list_path = self.cbftp.list_path(site=site.id, path=site.groups_dir, type="DIR", **kwargs)
         return [path["name"] for path in list_path]
 
-    def upload(self, site: Site, release_name: str, src_path: Optional[str] = None, **kwargs: Any) -> dict[str, Any]:
+    def upload(self, site: Site, release_name: str, src_path: str | None = None, **kwargs: Any) -> dict[str, Any]:
         """Upload the release from the specified source path to site.
 
         Args:
@@ -173,4 +175,7 @@ class CBFTPManager:
                 pbar["tqdm"].close()
                 if abort:
                     self.cbftp.abort_transferjob(id=pbar["job_id"])
+
+            if abort:
+                self.log.info("Aborted running transfer jobs")
             raise

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
+
 class CommandFailure(Exception):
-    def __init__(self, command: str, failures: list[dict[str, str]], *args: object) -> None:
-        super().__init__(*args)
+    def __init__(self, command: str, failures: list[dict[str, str]]) -> None:
         self.command = command
         self.failures = failures
 

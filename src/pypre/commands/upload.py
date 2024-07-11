@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import io
 import itertools
 import logging
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 import click
 from natsort import natsorted
@@ -30,7 +32,7 @@ from pypre.utils.click import CtxObj, GlobPaths
 @click.option(
     "-s",
     "--site",
-    type=click.Choice(cast(list[str], config.sites.keys())),
+    type=click.Choice(cast("list[str]", config.sites.keys())),
     required=True,
     multiple=True,
     help="Site(s) to upload to.",
@@ -39,7 +41,7 @@ from pypre.utils.click import CtxObj, GlobPaths
 @click.option("-c", "--check", is_flag=True, help="Check completeness of releases after upload.")
 @click.option(
     "--fxp",
-    type=click.Choice(cast(list[str], config.sites.keys())),
+    type=click.Choice(cast("list[str]", config.sites.keys())),
     default=None,
     multiple=True,
     help="Site(s) to FXP to. Must be different from the upload site(s).",
@@ -49,11 +51,11 @@ def upload(
     ctx: click.Context,
     releases: tuple[Path, ...],
     glob: tuple[list[Path], ...],
-    file: Optional[io.TextIOWrapper],
+    file: io.TextIOWrapper | None,
     site: tuple[str, ...],
     wait: bool,
     check: bool,
-    fxp: Optional[tuple[str, ...]],
+    fxp: tuple[str, ...] | None,
 ) -> None:
     log = logging.getLogger("pypre.upload")
 

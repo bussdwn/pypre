@@ -1,21 +1,21 @@
-from typing import Optional
+from __future__ import annotations
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 
 class DirConfig(BaseModel):
     """Directory configuration relative to a specific site."""
 
-    all: Optional[str]
+    all: str | None = None
     """The group directory that will be used in all cases."""
 
-    match_group: Optional[bool]
+    match_group: bool | None = None
     """Whether to use a directory matching the group tag."""
 
-    default: Optional[str]
+    default: str | None = None
     """The default group directory to use if the determined one does not exist."""
 
-    group_map: Optional[dict[str, str]]
+    group_map: dict[str, str] | None = None
     """A mapping used to determine group directory from the group tag."""
 
 
@@ -37,13 +37,15 @@ class Site(BaseModel):
     sections_config: dict[str, str] = {}
     """Sections configuration."""
 
-    @validator("groups_dir")
+    @field_validator("groups_dir")
+    @classmethod
     def starts_with_slash(cls, v: str) -> str:
         if not v.startswith("/"):
             raise ValueError("'groups_dir' must start with '/'")
         return v
 
-    @validator("pre_command")
+    @field_validator("pre_command")
+    @classmethod
     def is_pre_command(cls, v: str) -> str:
         if not all(template in v for template in ("{release}", "{section}")):
             raise ValueError("'pre_command' must be a template string containing '{release}' and '{section}'")
@@ -52,7 +54,7 @@ class Site(BaseModel):
     def __hash__(self) -> int:
         return hash(self.id)
 
-    def get_group_dir(self, release_name: str) -> tuple[Optional[str], Optional[str]]:
+    def get_group_dir(self, release_name: str) -> tuple[str | None, str | None]:
         """Determine the group directory from the release name.
 
         Args:

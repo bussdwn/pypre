@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import io
 import itertools
 import logging
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Optional, cast
+from typing import cast
 
 import click
 from natsort import natsorted
@@ -32,14 +35,14 @@ from pypre.utils.click import CtxObj, GlobPaths
     "-f",
     "--from",
     "from_",
-    type=click.Choice(cast(list[str], config.sites.keys())),
+    type=click.Choice(cast("list[str]", config.sites.keys())),
     required=True,
     help="Site to FXP from.",
 )
 @click.option(
     "-t",
     "--to",
-    type=click.Choice(cast(list[str], config.sites.keys())),
+    type=click.Choice(cast("list[str]", config.sites.keys())),
     required=True,
     multiple=True,
     help="Site(s) to FXP to.",
@@ -56,7 +59,7 @@ def fxp(
     ctx: click.Context,
     releases: tuple[Path, ...],
     glob: tuple[list[Path], ...],
-    file: Optional[io.TextIOWrapper],
+    file: io.TextIOWrapper | None,
     from_: str,
     to: tuple[str, ...],
     wait: bool,

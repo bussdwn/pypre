@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import base64
 from argparse import ArgumentParser, Namespace
 from getpass import getpass
 from pathlib import Path
-from typing import Optional
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -14,7 +15,7 @@ ITERATIONS = 480000
 
 class TypedNamespace(Namespace):
     config_path: Path
-    outpath: Optional[Path]
+    outpath: Path | None
 
 
 def handle_args() -> TypedNamespace:
@@ -29,7 +30,7 @@ def handle_args() -> TypedNamespace:
     return parser.parse_args(namespace=TypedNamespace())
 
 
-def encrypt_config_file(key_str: str, config_path: Path, outpath: Optional[Path]) -> Path:
+def encrypt_config_file(key_str: str, config_path: Path, outpath: Path | None) -> Path:
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=SALT_BYTES, iterations=ITERATIONS)
     key = base64.urlsafe_b64encode(kdf.derive(key_str.encode()))
     fernet = Fernet(key)

@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import logging
 import sys
 from copy import copy
-from typing import Literal, Optional
+from typing import Callable, ClassVar, Literal
 
 import click
 
@@ -17,7 +19,7 @@ class ColourizedFormatter(logging.Formatter):
       for formatting the output, instead of the plain text message.
     """
 
-    level_name_colors = {
+    level_name_colors: ClassVar[dict[int, Callable[[str], str]]] = {
         logging.DEBUG: lambda level_name: click.style(str(level_name), fg="cyan"),
         logging.INFO: lambda level_name: click.style(str(level_name), fg="green"),
         logging.WARNING: lambda level_name: click.style(str(level_name), fg="yellow"),
@@ -27,10 +29,10 @@ class ColourizedFormatter(logging.Formatter):
 
     def __init__(
         self,
-        fmt: Optional[str] = None,
-        datefmt: Optional[str] = None,
+        fmt: str | None = None,
+        datefmt: str | None = None,
         style: Literal["%", "{", "$"] = "%",
-        use_colors: Optional[bool] = None,
+        use_colors: bool | None = None,
     ) -> None:
         if use_colors in (True, False):
             self.use_colors = use_colors

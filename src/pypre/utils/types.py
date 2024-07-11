@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
-from pydantic.env_settings import SettingsSourceCallable
 from tqdm import tqdm
-
-SourcesTuple = tuple[SettingsSourceCallable, SettingsSourceCallable, SettingsSourceCallable, SettingsSourceCallable]
 
 
 class PBarsType(TypedDict):

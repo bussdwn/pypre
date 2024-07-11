@@ -14,6 +14,7 @@ class CBFTP:
     """A CBFTP client using the REST API.
 
     Args:
+        name: The name of the CBFTP instance, for logging purposes.
         base_url: The host of the CBFTP instance.
         password: The password to use while authenticating to the API.
         verify: Whether HTTPS requests are verified. As CBFTP is using a self-signed
@@ -23,11 +24,13 @@ class CBFTP:
 
     def __init__(
         self,
+        name: str,
         base_url: str,
         password: str,
         verify: bool = False,
         proxy: str | None = None,
     ) -> None:
+        self.name = name
         self.base_url = base_url.rstrip("/")
         self._session = requests.Session()
         if proxy is not None:
@@ -39,7 +42,7 @@ class CBFTP:
     def online(self) -> bool:
         """The CBFTP is online and reachable."""
         try:
-            self._request("head", "/")
+            self._raw_request("head", "/")
         except HTTPError:
             # Got response from API (even if not a 2XX one)
             pass
@@ -47,17 +50,22 @@ class CBFTP:
             return False
         return True
 
-    def _request(self, method: str, endpoint: str, **kwargs: Any) -> Any:
+    def _json_request(self, method: str, endpoint: str, **kwargs: Any) -> Any:
         url = urljoin(self.base_url, endpoint)
         rq = self._session.request(method, url, **kwargs)
         rq.raise_for_status()
         return rq.json()
 
+    def _raw_request(self, method: str, endpoint: str, **kwargs: Any) -> None:
+        url = urljoin(self.base_url, endpoint)
+        rq = self._session.request(method, url, **kwargs)
+        rq.raise_for_status()
+
     def _get(self, endpoint: str, params: dict[str, str] | None = None, **kwargs: Any) -> Any:
-        return self._request("get", endpoint, params=params, **kwargs)
+        return self._json_request("get", endpoint, params=params, **kwargs)
 
     def _post(self, endpoint: str, json: dict[str, Any] | None = None, **kwargs: Any) -> Any:
-        return self._request("post", endpoint, json=json, **kwargs)
+        return self._json_request("post", endpoint, json=json, **kwargs)
 
     def raw(
         self,
@@ -168,7 +176,7 @@ class CBFTP:
             raise ValueError("Either name or id must be provided.")
         return transferjob
 
-    def abort_transferjob(self, *, name: str | None = None, id: int | None = None, **kwargs: Any) -> dict[str, Any]:
+    def abort_transferjob(self, *, name: str | None = None, id: int | None = None, **kwargs: Any) -> None:
         """Abort a transferjob.
 
         Args:
@@ -178,11 +186,9 @@ class CBFTP:
         Returns:
             Data for the aborted transferjob.
         """
-        abort_info: dict[str, Any]
         if name is not None:
-            abort_info = self._post(f"/transferjobs/{name}/abort", params={"id": "false"}, **kwargs)
+            self._raw_request("post", f"/transferjobs/{name}/abort", params={"id": "false"}, **kwargs)
         elif id is not None:
-            abort_info = self._post(f"/transferjobs/{id}/abort", params={"id": "true"}, **kwargs)
+            self._raw_request("post", f"/transferjobs/{id}/abort", params={"id": "true"}, **kwargs)
         else:
             raise ValueError("Either name or id must be provided.")
-        return abort_info

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import io
 import itertools
 import logging
 from pathlib import Path
 from time import sleep
-from typing import Optional, cast
+from typing import cast
 
 import click
 from natsort import natsorted
@@ -32,7 +34,7 @@ from pypre.utils.click import CtxObj, GlobPaths
 @click.option(
     "-s",
     "--site",
-    type=click.Choice(cast(list[str], config.sites.keys())),
+    type=click.Choice(cast("list[str]", config.sites.keys())),
     required=True,
     multiple=True,
     help="Site(s) to pre.",
@@ -50,7 +52,7 @@ def pre(
     ctx: click.Context,
     releases: tuple[Path, ...],
     glob: tuple[list[Path], ...],
-    file: Optional[io.TextIOWrapper],
+    file: io.TextIOWrapper | None,
     site: tuple[str, ...],
     cooldown: float,
 ) -> None:

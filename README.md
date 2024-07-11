@@ -1,8 +1,6 @@
 # pypre - a cbftp python wrapper to manage uploads and pres
 
-Note: this repository is a mirror, and only tagged releases are tracked.
-
-pypre gives convenient commands to upload, fxp and pre releases using the [cbftp REST API](https://cbftp.gay/svn/cbftp/API).
+pypre gives convenient commands to upload, fxp and pre releases using the [cbftp REST API](https://cbftp.glftpd.io/svn/cbftp/API).
 It does not handle spread jobs.
 
 pypre is fully typed and mypy compliant.
@@ -24,11 +22,10 @@ pypre is fully typed and mypy compliant.
 
 pypre requires Python>=3.9, and is only tested on Linux.
 
-It is recommended to use a virtual environment to run this program. Be sure to have [setuptools](https://setuptools.pypa.io/en/latest/index.html) installed.
+It is recommended to use a virtual environment to run this program.
 
 ```sh
 virtualenv env
-pip install -U pip setuptools wheel
 ```
 
 To install the package:
@@ -228,7 +225,7 @@ pypre pre -g "*x264*MYGRP" -s S1 -s S2 -s S3 -c 10
 
 ## Configuration encryption
 
-It is possible to encrypt your configuration file with a passphrase. The [encrypt_config.py](scripts/encrypt_config.py) can be used to do so:
+It is possible to encrypt your configuration file with a passphrase. The [encrypt_config.py](scripts/encrypt_config.py) script can be used to do so:
 
 ```sh
 python scripts/encrypt_config.py /path/to/config.toml --outpath /path/to/encrypted

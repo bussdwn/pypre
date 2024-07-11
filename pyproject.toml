@@ -1,13 +1,75 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.isort]
-src_paths = ["src"]
-line_length = 120
-use_parentheses = true
-honor_noqa = true
-remove_redundant_aliases = true
+[project]
+name = "pypre"
+version = "1.5.0"
+description = "A cbftp python wrapper to manage uploads and pres."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+dependencies = [
+    "click",
+    "requests[socks]>=2.14.0",
+    "tqdm",
+    "tomli;python_version<'3.11'",
+    "natsort",
+    "pydantic>=2.3.0",
+    "pydantic-settings>=2.2.1",
+    "python-dotenv",
+    "typing-extensions>=4.0.1;python_version<'3.11'",
+]
 
-[tool.black]
+[project.optional-dependencies]
+crypto = ["cryptography"]
+
+[project.scripts]
+pypre = "pypre.main:main"
+pp = "pypre.main:main"
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"pypre" = ["py.typed"]
+
+
+[tool.ruff]
 line-length = 120
+src = ["src"]
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "UP",
+    "I",
+    "PL",
+    "RUF",
+]
+ignore = [
+    "PLR0912",
+    "PLR0913",
+    "PLR2004",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pypre"]
